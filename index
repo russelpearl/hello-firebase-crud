@@ -1,0 +1,96 @@
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.5.3/firebase.js"></script>
+<script>
+
+    var config = {
+        apiKey: "AIzaSyBE1e41bQ0T2eZxiSWLIxOp-CArOs4UkXw",
+        authDomain: "tutorialsfirebase-pearl.firebaseapp.com",
+        databaseURL: "https://tutorialsfirebase-pearl.firebaseio.com",
+        projectId: "tutorialsfirebase-pearl",
+        storageBucket: "",
+        messagingSenderId: "414228237303"
+    };
+    firebase.initializeApp(config);
+
+     //create firebase references
+     var Auth = firebase.auth(); 
+     var dbRef = firebase.database();
+     var sampleRef = dbRef.ref('sample');
+     var auth = null;
+
+     // auto execute for new data
+     sampleRef.on('child_added', function(data) {
+        $("#type").append('<tr id="'+data.key+'"><td>'+ data.val().my_text +'</td><td><a data-key="'+data.key+'" href="#" class="btnEdit">Edit</a></td><td><a data-key="'+data.key+'" href="#" class="btnRemove">Remove</a></td></tr>');
+    });
+
+     // auto execute for update data
+     sampleRef.on('child_changed', function(data) {
+        $("#type #"+data.key).html('<td>'+ data.val().my_text +'</td><td><a data-key="'+data.key+'" href="#" class="btnEdit">Edit</a></td><td><a data-key="'+data.key+'" href="#" class="btnRemove">Remove</a></td>');
+    });
+
+      // auto execute for delete
+      sampleRef.on('child_removed', function(data) {
+        $("#type #"+data.key).remove();
+    });
+
+
+      $(document).on("click","#btnSubmit",function(){
+       if ($("#txtType").val()=='New'){
+        // for new data
+        var data = {
+            my_text: $('#mytext').val(),
+        };
+        sampleRef.push(data);        // add function
+    } else {
+        // for update data
+        var updatedata = {
+            my_text: $('#mytext').val(),
+        }
+        thekey = $("#txtKey").val();
+        sampleRef.child(thekey).update(updatedata);     //update function
+
+    }
+    $('#txtReq_type').val("");
+    $('#mytext').val("");
+    $("#txtKey").val("");
+    $("#txtType").val("New");
+});
+
+      // start edit
+      $(document).on("click",".btnEdit",function(){
+        key = $(this).attr("data-key");
+        sampleRef.child(key).once("value", function(snap){      // retrieve data function
+            $("#mytext").val(snap.val().my_text);
+            $("#txtKey").val(key);
+        });
+        $("#txtType").val("Update");
+    }); 
+// end edit
+
+     // start remove
+     $(document).on("click",".btnRemove",function(){ 
+        key = $(this).attr("data-key");
+        sampleRef.child(key).remove(); //remove data function     
+    });
+// end remove
+</script>
+
+</head>
+<input type="hidden" name="" id="txtType" value="New">
+<input type="hidden" name="" id="txtKey" value="0">
+
+<table>
+         <thead>
+               <tr>
+                     <th>Data</th>
+                     <th>Action</th>
+               </tr>
+         </thead>
+         <tbody id="type">
+         </tbody>
+   </table>
+
+Text: <input id="mytext" required></input>
+
+<button type="submit" id="btnSubmit" >Submit</button>
